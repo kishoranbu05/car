@@ -2,46 +2,38 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>FiveM Handling.meta Generator</title>
+<title>FiveM Handling.meta Generator (Fixed)</title>
 
 <style>
 body {
-  background:#0b0e13;
+  background:#0c0f14;
   color:#eaeaea;
   font-family: Arial, Helvetica, sans-serif;
   padding:20px;
 }
-
 h1 {
   color:#4caf50;
   text-align:center;
 }
-
 .container {
   max-width:1100px;
   margin:auto;
 }
-
 label {
   margin-top:15px;
   display:block;
   font-weight:bold;
 }
-
 input, select, textarea, button {
   width:100%;
   margin-top:6px;
   padding:10px;
-  background:#141822;
+  background:#151a23;
   color:#fff;
   border:1px solid #333;
   border-radius:4px;
 }
-
-textarea {
-  resize:vertical;
-}
-
+textarea { resize:vertical; }
 button {
   margin-top:20px;
   background:#4caf50;
@@ -49,11 +41,7 @@ button {
   cursor:pointer;
   border:none;
 }
-
-button:hover {
-  background:#43a047;
-}
-
+button:hover { background:#43a047; }
 .footer {
   text-align:center;
   margin-top:30px;
@@ -65,11 +53,11 @@ button:hover {
 
 <body>
 
-<h1>🚗 FiveM Handling.meta Generator</h1>
+<h1>🚗 FiveM Handling.meta Generator (Crash-Safe)</h1>
 
 <div class="container">
 
-<label>Vehicle Name</label>
+<label>Vehicle Name (spawn / handlingName)</label>
 <input id="carName" placeholder="superb" />
 
 <label>Vehicle Weight (kg)</label>
@@ -82,48 +70,49 @@ button:hover {
   <option value="drift">Full Drift</option>
 </select>
 
-<label>Paste FULL original handling.meta</label>
-<textarea id="input" rows="12"></textarea>
+<button onclick="generate()">Generate Handling.meta</button>
 
-<button onclick="generateHandling()">Generate New Handling</button>
-
-<label>Generated handling.meta (FINAL)</label>
-<textarea id="output" rows="18"></textarea>
+<label>Generated handling.meta (SAFE)</label>
+<textarea id="output" rows="26"></textarea>
 
 </div>
 
 <div class="footer">
-  Formula-based handling | RP safe | Drift accurate
+  XML-safe • RP balanced • Drift supported • No crash
 </div>
 
 <script>
-function generateHandling() {
+function f(n) {
+  return Number(n).toFixed(6);
+}
 
-  const name = document.getElementById("carName").value || "customcar";
-  const weight = parseFloat(document.getElementById("weight").value);
+function generate() {
+
+  const name = (document.getElementById("carName").value || "customcar").toUpperCase();
+  const weight = Number(document.getElementById("weight").value);
   const style = document.getElementById("style").value;
 
   if (!weight || weight < 500) {
-    alert("Please enter valid vehicle weight");
+    alert("Enter valid vehicle weight (kg)");
     return;
   }
 
   /* =============================
-     CORE FORMULAS
+     BASE FORMULAS
   ============================= */
 
-  const mass = weight;
-  const drag = (weight / 150).toFixed(2);
-  const topSpeed = (160 - (weight / 25)).toFixed(1);
+  let mass = weight;
+  let drag = weight / 150;
+  let topSpeed = 160 - (weight / 25);
 
   let driveForce = (550 / weight);
-  let brakeForce = (weight * 0.0025);
-  let handBrake = (weight * 0.0018);
+  let brakeForce = weight * 0.0025;
+  let handBrake = weight * 0.0018;
 
-  let tractionMax = (3.0 - (weight / 3000));
+  let tractionMax = 3.0 - (weight / 3000);
   let tractionMin = tractionMax - 0.5;
-  let tractionLat = (22 + (weight / 200));
-  let tractionLoss = (weight / 2000);
+  let tractionLat = 22 + (weight / 200);
+  let tractionLoss = weight / 2000;
 
   let steeringLock = 35;
   let brakeBias = 0.63;
@@ -148,73 +137,95 @@ function generateHandling() {
     brakeBias = 0.58;
   }
 
-  driveForce = driveForce.toFixed(3);
-  brakeForce = brakeForce.toFixed(2);
-  handBrake = handBrake.toFixed(2);
-  tractionMax = tractionMax.toFixed(2);
-  tractionMin = tractionMin.toFixed(2);
-  tractionLat = tractionLat.toFixed(2);
-  tractionLoss = tractionLoss.toFixed(2);
-
-  const antiRoll = (weight * 0.05).toFixed(2);
+  let antiRoll = weight * 0.05;
 
   /* =============================
-     FINAL HANDLING FILE
+     FINAL XML (CRASH-SAFE)
   ============================= */
 
-  const result = `
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <CHandlingDataMgr>
   <HandlingData>
     <Item type="CHandlingData">
-      <handlingName>${name.toUpperCase()}</handlingName>
+      <handlingName>${name}</handlingName>
 
-      <fMass value="${mass}" />
-      <fInitialDragCoeff value="${drag}" />
-      <fPercentSubmerged value="85.0" />
+      <fMass value="${f(mass)}" />
+      <fInitialDragCoeff value="${f(drag)}" />
+      <fPercentSubmerged value="85.000000" />
 
-      <vecCentreOfMassOffset x="0.0" y="0.05" z="-0.02" />
-      <vecInertiaMultiplier x="1.0" y="1.3" z="1.5" />
+      <vecCentreOfMassOffset x="0.000000" y="0.050000" z="-0.020000" />
+      <vecInertiaMultiplier x="1.000000" y="1.300000" z="1.500000" />
 
-      <fDriveBiasFront value="0.45" />
+      <fDriveBiasFront value="0.450000" />
       <nInitialDriveGears value="6" />
 
-      <fInitialDriveForce value="${driveForce}" />
-      <fDriveInertia value="1.05" />
-      <fClutchChangeRateScaleUpShift value="2.0" />
-      <fClutchChangeRateScaleDownShift value="2.0" />
-      <fInitialDriveMaxFlatVel value="${topSpeed}" />
+      <fInitialDriveForce value="${f(driveForce)}" />
+      <fDriveInertia value="1.050000" />
+      <fClutchChangeRateScaleUpShift value="2.000000" />
+      <fClutchChangeRateScaleDownShift value="2.000000" />
+      <fInitialDriveMaxFlatVel value="${f(topSpeed)}" />
 
-      <fBrakeForce value="${brakeForce}" />
-      <fBrakeBiasFront value="${brakeBias}" />
-      <fHandBrakeForce value="${handBrake}" />
+      <fBrakeForce value="${f(brakeForce)}" />
+      <fBrakeBiasFront value="${f(brakeBias)}" />
+      <fHandBrakeForce value="${f(handBrake)}" />
 
-      <fSteeringLock value="${steeringLock}" />
+      <fSteeringLock value="${f(steeringLock)}" />
 
-      <fTractionCurveMax value="${tractionMax}" />
-      <fTractionCurveMin value="${tractionMin}" />
-      <fTractionCurveLateral value="${tractionLat}" />
-      <fLowSpeedTractionLossMult value="${tractionLoss}" />
-      <fTractionBiasFront value="0.50" />
+      <fTractionCurveMax value="${f(tractionMax)}" />
+      <fTractionCurveMin value="${f(tractionMin)}" />
+      <fTractionCurveLateral value="${f(tractionLat)}" />
+      <fTractionSpringDeltaMax value="0.150000" />
+      <fLowSpeedTractionLossMult value="${f(tractionLoss)}" />
+      <fCamberStiffnesss value="0.000000" />
+      <fTractionBiasFront value="0.500000" />
+      <fTractionLossMult value="1.000000" />
 
-      <fAntiRollBarForce value="${antiRoll}" />
-      <fAntiRollBarBiasFront value="0.60" />
+      <fSuspensionForce value="1.600000" />
+      <fSuspensionCompDamp value="0.700000" />
+      <fSuspensionReboundDamp value="0.700000" />
+      <fSuspensionUpperLimit value="0.175000" />
+      <fSuspensionLowerLimit value="-0.200000" />
+      <fSuspensionRaise value="0.015000" />
+      <fSuspensionBiasFront value="0.520000" />
 
-      <fCollisionDamageMult value="1.0" />
-      <fWeaponDamageMult value="1.0" />
-      <fDeformationDamageMult value="2.0" />
-      <fEngineDamageMult value="1.0" />
+      <fAntiRollBarForce value="${f(antiRoll)}" />
+      <fAntiRollBarBiasFront value="0.600000" />
+      <fRollCentreHeightFront value="0.670000" />
+      <fRollCentreHeightRear value="0.600000" />
 
-      <fPetrolTankVolume value="80.0" />
-      <fOilVolume value="8.0" />
+      <fCollisionDamageMult value="1.000000" />
+      <fWeaponDamageMult value="1.000000" />
+      <fDeformationDamageMult value="2.000000" />
+      <fEngineDamageMult value="1.000000" />
+
+      <fPetrolTankVolume value="80.000000" />
+      <fOilVolume value="8.000000" />
+
+      <fSeatOffsetDistX value="0.000000" />
+      <fSeatOffsetDistY value="0.000000" />
+      <fSeatOffsetDistZ value="0.000000" />
 
       <nMonetaryValue value="50000" />
+      <strModelFlags>000010</strModelFlags>
+      <strHandlingFlags>20000</strHandlingFlags>
+      <strDamageFlags>0</strDamageFlags>
       <AIHandling>AVERAGE</AIHandling>
+
+      <SubHandlingData>
+        <Item type="CCarHandlingData">
+          <fBackEndPopUpCarImpulseMult value="0.100000" />
+          <fBackEndPopUpBuildingImpulseMult value="0.030000" />
+          <fBackEndPopUpMaxDeltaSpeed value="0.600000" />
+        </Item>
+        <Item type="NULL" />
+        <Item type="NULL" />
+      </SubHandlingData>
+
     </Item>
   </HandlingData>
-</CHandlingDataMgr>
-`;
+</CHandlingDataMgr>`;
 
-  document.getElementById("output").value = result.trim();
+  document.getElementById("output").value = xml;
 }
 </script>
 
