@@ -1,40 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>FiveM Handling Generator</title>
-  <style>
-    body {
-      background:#0f1115;
-      color:#fff;
-      font-family: Arial, sans-serif;
-      padding:20px;
-    }
-    textarea, input, select, button {
-      width:100%;
-      margin-top:10px;
-      padding:10px;
-      background:#1c1f26;
-      color:#fff;
-      border:1px solid #333;
-    }
-    button {
-      background:#4caf50;
-      font-size:16px;
-      cursor:pointer;
-    }
-    h2 { color:#4caf50; }
-  </style>
+<meta charset="UTF-8">
+<title>FiveM Handling.meta Generator</title>
+
+<style>
+body {
+  background:#0b0e13;
+  color:#eaeaea;
+  font-family: Arial, Helvetica, sans-serif;
+  padding:20px;
+}
+
+h1 {
+  color:#4caf50;
+  text-align:center;
+}
+
+.container {
+  max-width:1100px;
+  margin:auto;
+}
+
+label {
+  margin-top:15px;
+  display:block;
+  font-weight:bold;
+}
+
+input, select, textarea, button {
+  width:100%;
+  margin-top:6px;
+  padding:10px;
+  background:#141822;
+  color:#fff;
+  border:1px solid #333;
+  border-radius:4px;
+}
+
+textarea {
+  resize:vertical;
+}
+
+button {
+  margin-top:20px;
+  background:#4caf50;
+  font-size:16px;
+  cursor:pointer;
+  border:none;
+}
+
+button:hover {
+  background:#43a047;
+}
+
+.footer {
+  text-align:center;
+  margin-top:30px;
+  font-size:13px;
+  color:#888;
+}
+</style>
 </head>
+
 <body>
 
-<h2>🚗 FiveM Handling.meta Generator</h2>
+<h1>🚗 FiveM Handling.meta Generator</h1>
+
+<div class="container">
 
 <label>Vehicle Name</label>
-<input id="carName" placeholder="e.g. sultanrs" />
+<input id="carName" placeholder="superb" />
 
 <label>Vehicle Weight (kg)</label>
-<input id="weight" type="number" placeholder="e.g. 1500" />
+<input id="weight" type="number" placeholder="1500" />
 
 <label>Handling Style</label>
 <select id="style">
@@ -46,43 +85,57 @@
 <label>Paste FULL original handling.meta</label>
 <textarea id="input" rows="12"></textarea>
 
-<button onclick="generate()">Generate New Handling</button>
+<button onclick="generateHandling()">Generate New Handling</button>
 
-<label>Final handling.meta (copy & paste)</label>
+<label>Generated handling.meta (FINAL)</label>
 <textarea id="output" rows="18"></textarea>
 
+</div>
+
+<div class="footer">
+  Formula-based handling | RP safe | Drift accurate
+</div>
+
 <script>
-function generate() {
+function generateHandling() {
+
   const name = document.getElementById("carName").value || "customcar";
   const weight = parseFloat(document.getElementById("weight").value);
   const style = document.getElementById("style").value;
 
-  if (!weight) {
-    alert("Enter vehicle weight");
+  if (!weight || weight < 500) {
+    alert("Please enter valid vehicle weight");
     return;
   }
 
-  // ---------- CORE FORMULAS ----------
+  /* =============================
+     CORE FORMULAS
+  ============================= */
+
   const mass = weight;
+  const drag = (weight / 150).toFixed(2);
   const topSpeed = (160 - (weight / 25)).toFixed(1);
-  let driveForce = (550 / weight) * 1.2;
-  let drag = (weight / 150).toFixed(2);
-  let brakeForce = (weight * 0.0025).toFixed(2);
-  let handBrake = (weight * 0.0018).toFixed(2);
 
-  let tractionMax = (3.0 - (weight / 3000)).toFixed(2);
-  let tractionMin = (tractionMax - 0.5).toFixed(2);
-  let tractionLat = (22 + (weight / 200)).toFixed(2);
-  let tractionLoss = (weight / 2000).toFixed(2);
+  let driveForce = (550 / weight);
+  let brakeForce = (weight * 0.0025);
+  let handBrake = (weight * 0.0018);
 
-  let steerLock = 35;
+  let tractionMax = (3.0 - (weight / 3000));
+  let tractionMin = tractionMax - 0.5;
+  let tractionLat = (22 + (weight / 200));
+  let tractionLoss = (weight / 2000);
+
+  let steeringLock = 35;
   let brakeBias = 0.63;
 
-  // ---------- DRIFT MODIFIERS ----------
+  /* =============================
+     STYLE MODIFIERS
+  ============================= */
+
   if (style === "semi") {
-    driveForce *= 1.1;
+    driveForce *= 1.10;
     tractionLoss *= 1.3;
-    steerLock = 38;
+    steeringLock = 38;
     brakeBias = 0.60;
   }
 
@@ -91,45 +144,77 @@ function generate() {
     tractionLoss *= 1.6;
     tractionMax -= 0.4;
     tractionMin -= 0.4;
-    steerLock = 42;
+    steeringLock = 42;
     brakeBias = 0.58;
   }
 
   driveForce = driveForce.toFixed(3);
+  brakeForce = brakeForce.toFixed(2);
+  handBrake = handBrake.toFixed(2);
+  tractionMax = tractionMax.toFixed(2);
+  tractionMin = tractionMin.toFixed(2);
+  tractionLat = tractionLat.toFixed(2);
+  tractionLoss = tractionLoss.toFixed(2);
 
-  // ---------- FINAL HANDLING FILE ----------
-  const output = `
-<handling>
-  <Item type="CHandlingData">
-    <handlingName>${name.toUpperCase()}</handlingName>
+  const antiRoll = (weight * 0.05).toFixed(2);
 
-    <fMass>${mass}</fMass>
-    <fInitialDragCoeff>${drag}</fInitialDragCoeff>
+  /* =============================
+     FINAL HANDLING FILE
+  ============================= */
 
-    <fInitialDriveForce>${driveForce}</fInitialDriveForce>
-    <fInitialDriveMaxFlatVel>${topSpeed}</fInitialDriveMaxFlatVel>
-    <fDriveInertia>1.0</fDriveInertia>
+  const result = `
+<CHandlingDataMgr>
+  <HandlingData>
+    <Item type="CHandlingData">
+      <handlingName>${name.toUpperCase()}</handlingName>
 
-    <fBrakeForce>${brakeForce}</fBrakeForce>
-    <fBrakeBiasFront>${brakeBias}</fBrakeBiasFront>
-    <fHandBrakeForce>${handBrake}</fHandBrakeForce>
+      <fMass value="${mass}" />
+      <fInitialDragCoeff value="${drag}" />
+      <fPercentSubmerged value="85.0" />
 
-    <fSteeringLock>${steerLock}</fSteeringLock>
+      <vecCentreOfMassOffset x="0.0" y="0.05" z="-0.02" />
+      <vecInertiaMultiplier x="1.0" y="1.3" z="1.5" />
 
-    <fTractionCurveMax>${tractionMax}</fTractionCurveMax>
-    <fTractionCurveMin>${tractionMin}</fTractionCurveMin>
-    <fTractionCurveLateral>${tractionLat}</fTractionCurveLateral>
-    <fTractionBiasFront>0.50</fTractionBiasFront>
-    <fLowSpeedTractionLossMult>${tractionLoss}</fLowSpeedTractionLossMult>
+      <fDriveBiasFront value="0.45" />
+      <nInitialDriveGears value="6" />
 
-    <fAntiRollBarForce>${(weight * 0.05).toFixed(2)}</fAntiRollBarForce>
-    <fAntiRollBarBiasFront>0.60</fAntiRollBarBiasFront>
+      <fInitialDriveForce value="${driveForce}" />
+      <fDriveInertia value="1.05" />
+      <fClutchChangeRateScaleUpShift value="2.0" />
+      <fClutchChangeRateScaleDownShift value="2.0" />
+      <fInitialDriveMaxFlatVel value="${topSpeed}" />
 
-  </Item>
-</handling>
+      <fBrakeForce value="${brakeForce}" />
+      <fBrakeBiasFront value="${brakeBias}" />
+      <fHandBrakeForce value="${handBrake}" />
+
+      <fSteeringLock value="${steeringLock}" />
+
+      <fTractionCurveMax value="${tractionMax}" />
+      <fTractionCurveMin value="${tractionMin}" />
+      <fTractionCurveLateral value="${tractionLat}" />
+      <fLowSpeedTractionLossMult value="${tractionLoss}" />
+      <fTractionBiasFront value="0.50" />
+
+      <fAntiRollBarForce value="${antiRoll}" />
+      <fAntiRollBarBiasFront value="0.60" />
+
+      <fCollisionDamageMult value="1.0" />
+      <fWeaponDamageMult value="1.0" />
+      <fDeformationDamageMult value="2.0" />
+      <fEngineDamageMult value="1.0" />
+
+      <fPetrolTankVolume value="80.0" />
+      <fOilVolume value="8.0" />
+
+      <nMonetaryValue value="50000" />
+      <AIHandling>AVERAGE</AIHandling>
+    </Item>
+  </HandlingData>
+</CHandlingDataMgr>
 `;
 
-  document.getElementById("output").value = output.trim();
+  document.getElementById("output").value = result.trim();
 }
 </script>
 
