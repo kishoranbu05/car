@@ -2,230 +2,233 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>FiveM Handling.meta Generator (Fixed)</title>
+<title>FiveM Handling Generator Pro</title>
 
 <style>
-body {
-  background:#0c0f14;
-  color:#eaeaea;
-  font-family: Arial, Helvetica, sans-serif;
+:root {
+  --bg:#0e1117;
+  --panel:#161b22;
+  --accent:#4caf50;
+  --muted:#9aa4af;
+}
+body{
+  background:var(--bg);
+  color:#e6edf3;
+  font-family:Segoe UI,Roboto,Arial;
+  margin:0;
   padding:20px;
 }
-h1 {
-  color:#4caf50;
-  text-align:center;
-}
-.container {
-  max-width:1100px;
+h1{ text-align:center; color:var(--accent); }
+.wrapper{
+  max-width:1200px;
   margin:auto;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
 }
-label {
-  margin-top:15px;
+.card{
+  background:var(--panel);
+  padding:18px;
+  border-radius:10px;
+  box-shadow:0 0 0 1px #222;
+}
+label{
   display:block;
-  font-weight:bold;
+  margin-top:12px;
+  font-size:14px;
+  color:var(--muted);
 }
-input, select, textarea, button {
+input,select,textarea{
   width:100%;
   margin-top:6px;
   padding:10px;
-  background:#151a23;
-  color:#fff;
-  border:1px solid #333;
-  border-radius:4px;
+  background:#0d1117;
+  border:1px solid #30363d;
+  border-radius:6px;
+  color:#e6edf3;
 }
-textarea { resize:vertical; }
-button {
-  margin-top:20px;
-  background:#4caf50;
-  font-size:16px;
-  cursor:pointer;
+textarea{ resize:vertical; min-height:260px; }
+.range-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.range-wrap span{
+  min-width:40px;
+  text-align:right;
+  color:var(--accent);
+}
+button{
+  margin-top:18px;
+  width:100%;
+  padding:12px;
+  background:var(--accent);
   border:none;
+  border-radius:8px;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
 }
-button:hover { background:#43a047; }
-.footer {
+button:hover{ filter:brightness(1.05); }
+.footer{
   text-align:center;
-  margin-top:30px;
+  margin-top:20px;
   font-size:13px;
-  color:#888;
+  color:#8b949e;
+}
+@media(max-width:900px){
+  .wrapper{ grid-template-columns:1fr; }
 }
 </style>
 </head>
 
 <body>
 
-<h1>🚗 FiveM Handling.meta Generator (Crash-Safe)</h1>
+<h1>🚗 FiveM Handling Generator – Pro</h1>
 
-<div class="container">
+<div class="wrapper">
 
-<label>Vehicle Name (spawn / handlingName)</label>
-<input id="carName" placeholder="superb" />
+<!-- LEFT : INPUTS -->
+<div class="card">
 
-<label>Vehicle Weight (kg)</label>
-<input id="weight" type="number" placeholder="1500" />
+<label>Custom Vehicle Name (handlingName)</label>
+<input id="name" placeholder="SUPERB" />
 
-<label>Handling Style</label>
-<select id="style">
-  <option value="rp">Realistic RP</option>
-  <option value="semi">Semi Drift</option>
-  <option value="drift">Full Drift</option>
+<label>Vehicle Type</label>
+<select id="type">
+  <option value="Sedan">Sedan</option>
+  <option value="SUV">SUV</option>
+  <option value="Coupe">Coupe</option>
+  <option value="Super">Super</option>
+  <option value="Muscle">Muscle</option>
+  <option value="Off Road">Off Road</option>
+  <option value="Police">Police</option>
+  <option value="EMS">EMS</option>
+  <option value="Compact">Compact</option>
+  <option value="Van">Van</option>
 </select>
 
-<button onclick="generate()">Generate Handling.meta</button>
+<label>Vehicle Weight (kg)</label>
+<input id="weight" type="number" value="1680" />
 
-<label>Generated handling.meta (SAFE)</label>
-<textarea id="output" rows="26"></textarea>
+<label>Top Speed (KMPH)</label>
+<div class="range-wrap">
+  <input id="speed" type="range" min="100" max="590" step="10" value="180" oninput="speedVal.innerText=this.value">
+  <span id="speedVal">180</span>
+</div>
+
+<label>Number of Gears</label>
+<select id="gears">
+  <option>5</option>
+  <option selected>6</option>
+  <option>7</option>
+</select>
+
+<button onclick="generate()">Generate Handling</button>
+
+</div>
+
+<!-- RIGHT : OUTPUT -->
+<div class="card">
+<label>Generated handling.meta</label>
+<textarea id="out"></textarea>
+</div>
 
 </div>
 
 <div class="footer">
-  XML-safe • RP balanced • Drift supported • No crash
+Chart-based • RP safe • Stock feel • No fly • No rocket
 </div>
 
 <script>
-function f(n) {
-  return Number(n).toFixed(6);
-}
+/* ==============================
+   SPEED CHART (from file)
+============================== */
+const speedChart = {
+  180:{drag:4.2,drive:0.28,brake:4.8,hand:2.8,loss:0.52},
+  170:{drag:4.3,drive:0.27,brake:4.7,hand:2.7,loss:0.53},
+  160:{drag:4.4,drive:0.26,brake:4.6,hand:2.6,loss:0.54},
+  150:{drag:4.5,drive:0.25,brake:4.5,hand:2.5,loss:0.55},
+  140:{drag:4.4,drive:0.24,brake:4.4,hand:2.4,loss:0.56},
+  130:{drag:4.3,drive:0.23,brake:4.3,hand:2.3,loss:0.57},
+  120:{drag:4.2,drive:0.22,brake:4.2,hand:2.2,loss:0.58}
+};
 
-function generate() {
+/* ==============================
+   DAMAGE + FUEL CHART
+============================== */
+const damageChart = {
+  Sedan:{col:0.5,wep:0.07,def:0.5,eng:0.5,fuel:80,oil:8},
+  SUV:{col:0.5,wep:0.07,def:0.5,eng:0.5,fuel:80,oil:8},
+  Coupe:{col:0.4,wep:0.06,def:0.4,eng:0.4,fuel:60,oil:6},
+  Super:{col:0.4,wep:0.06,def:0.4,eng:0.4,fuel:60,oil:6},
+  Muscle:{col:0.3,wep:0.05,def:0.3,eng:0.3,fuel:70,oil:7},
+  "Off Road":{col:0.3,wep:0.05,def:0.3,eng:0.3,fuel:80,oil:8},
+  Police:{col:0.3,wep:0.03,def:0.3,eng:0.3,fuel:80,oil:8},
+  EMS:{col:0.3,wep:0.03,def:0.3,eng:0.3,fuel:90,oil:9},
+  Compact:{col:0.6,wep:0.08,def:0.6,eng:0.6,fuel:70,oil:7},
+  Van:{col:0.6,wep:0.08,def:0.6,eng:0.6,fuel:90,oil:9}
+};
 
-  const name = (document.getElementById("carName").value || "customcar").toUpperCase();
+function f(n){ return Number(n).toFixed(6); }
+
+function generate(){
+  const name = (document.getElementById("name").value || "CUSTOM").toUpperCase();
+  const type = document.getElementById("type").value;
   const weight = Number(document.getElementById("weight").value);
-  const style = document.getElementById("style").value;
+  const speed = document.getElementById("speed").value;
+  const gears = document.getElementById("gears").value;
 
-  if (!weight || weight < 500) {
-    alert("Enter valid vehicle weight (kg)");
-    return;
-  }
-
-  /* =============================
-     BASE FORMULAS
-  ============================= */
-
-  let mass = weight;
-  let drag = weight / 150;
-  let topSpeed = 160 - (weight / 25);
-
-  let driveForce = (550 / weight);
-  let brakeForce = weight * 0.0025;
-  let handBrake = weight * 0.0018;
-
-  let tractionMax = 3.0 - (weight / 3000);
-  let tractionMin = tractionMax - 0.5;
-  let tractionLat = 22 + (weight / 200);
-  let tractionLoss = weight / 2000;
-
-  let steeringLock = 35;
-  let brakeBias = 0.63;
-
-  /* =============================
-     STYLE MODIFIERS
-  ============================= */
-
-  if (style === "semi") {
-    driveForce *= 1.10;
-    tractionLoss *= 1.3;
-    steeringLock = 38;
-    brakeBias = 0.60;
-  }
-
-  if (style === "drift") {
-    driveForce *= 1.25;
-    tractionLoss *= 1.6;
-    tractionMax -= 0.4;
-    tractionMin -= 0.4;
-    steeringLock = 42;
-    brakeBias = 0.58;
-  }
-
-  let antiRoll = weight * 0.05;
-
-  /* =============================
-     FINAL XML (CRASH-SAFE)
-  ============================= */
+  const s = speedChart[speed];
+  const d = damageChart[type];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <CHandlingDataMgr>
-  <HandlingData>
-    <Item type="CHandlingData">
-      <handlingName>${name}</handlingName>
+<HandlingData>
+<Item type="CHandlingData">
+<handlingName>${name}</handlingName>
 
-      <fMass value="${f(mass)}" />
-      <fInitialDragCoeff value="${f(drag)}" />
-      <fPercentSubmerged value="85.000000" />
+<fMass value="${f(weight)}"/>
+<fInitialDragCoeff value="${f(s.drag)}"/>
+<fPercentSubmerged value="85.000000"/>
 
-      <vecCentreOfMassOffset x="0.000000" y="0.050000" z="-0.020000" />
-      <vecInertiaMultiplier x="1.000000" y="1.300000" z="1.500000" />
+<vecCentreOfMassOffset x="0.0" y="0.0" z="0.0"/>
+<vecInertiaMultiplier x="1.0" y="1.4" z="1.6"/>
 
-      <fDriveBiasFront value="0.450000" />
-      <nInitialDriveGears value="6" />
+<fDriveBiasFront value="0.45"/>
+<nInitialDriveGears value="${gears}"/>
 
-      <fInitialDriveForce value="${f(driveForce)}" />
-      <fDriveInertia value="1.050000" />
-      <fClutchChangeRateScaleUpShift value="2.000000" />
-      <fClutchChangeRateScaleDownShift value="2.000000" />
-      <fInitialDriveMaxFlatVel value="${f(topSpeed)}" />
+<fInitialDriveForce value="${f(s.drive)}"/>
+<fDriveInertia value="1.0"/>
+<fClutchChangeRateScaleUpShift value="1.7"/>
+<fClutchChangeRateScaleDownShift value="1.7"/>
+<fInitialDriveMaxFlatVel value="${f(speed)}"/>
 
-      <fBrakeForce value="${f(brakeForce)}" />
-      <fBrakeBiasFront value="${f(brakeBias)}" />
-      <fHandBrakeForce value="${f(handBrake)}" />
+<fBrakeForce value="${f(s.brake)}"/>
+<fBrakeBiasFront value="0.64"/>
+<fHandBrakeForce value="${f(s.hand)}"/>
 
-      <fSteeringLock value="${f(steeringLock)}" />
+<fSteeringLock value="35.0"/>
 
-      <fTractionCurveMax value="${f(tractionMax)}" />
-      <fTractionCurveMin value="${f(tractionMin)}" />
-      <fTractionCurveLateral value="${f(tractionLat)}" />
-      <fTractionSpringDeltaMax value="0.150000" />
-      <fLowSpeedTractionLossMult value="${f(tractionLoss)}" />
-      <fCamberStiffnesss value="0.000000" />
-      <fTractionBiasFront value="0.500000" />
-      <fTractionLossMult value="1.000000" />
+<fTractionCurveMax value="2.1"/>
+<fTractionCurveMin value="1.8"/>
+<fTractionCurveLateral value="26.0"/>
+<fLowSpeedTractionLossMult value="${f(s.loss)}"/>
 
-      <fSuspensionForce value="1.600000" />
-      <fSuspensionCompDamp value="0.700000" />
-      <fSuspensionReboundDamp value="0.700000" />
-      <fSuspensionUpperLimit value="0.175000" />
-      <fSuspensionLowerLimit value="-0.200000" />
-      <fSuspensionRaise value="0.015000" />
-      <fSuspensionBiasFront value="0.520000" />
+<fCollisionDamageMult value="${f(d.col)}"/>
+<fWeaponDamageMult value="${f(d.wep)}"/>
+<fDeformationDamageMult value="${f(d.def)}"/>
+<fEngineDamageMult value="${f(d.eng)}"/>
 
-      <fAntiRollBarForce value="${f(antiRoll)}" />
-      <fAntiRollBarBiasFront value="0.600000" />
-      <fRollCentreHeightFront value="0.670000" />
-      <fRollCentreHeightRear value="0.600000" />
+<fPetrolTankVolume value="${f(d.fuel)}"/>
+<fOilVolume value="${f(d.oil)}"/>
 
-      <fCollisionDamageMult value="1.000000" />
-      <fWeaponDamageMult value="1.000000" />
-      <fDeformationDamageMult value="2.000000" />
-      <fEngineDamageMult value="1.000000" />
-
-      <fPetrolTankVolume value="80.000000" />
-      <fOilVolume value="8.000000" />
-
-      <fSeatOffsetDistX value="0.000000" />
-      <fSeatOffsetDistY value="0.000000" />
-      <fSeatOffsetDistZ value="0.000000" />
-
-      <nMonetaryValue value="50000" />
-      <strModelFlags>000010</strModelFlags>
-      <strHandlingFlags>20000</strHandlingFlags>
-      <strDamageFlags>0</strDamageFlags>
-      <AIHandling>AVERAGE</AIHandling>
-
-      <SubHandlingData>
-        <Item type="CCarHandlingData">
-          <fBackEndPopUpCarImpulseMult value="0.100000" />
-          <fBackEndPopUpBuildingImpulseMult value="0.030000" />
-          <fBackEndPopUpMaxDeltaSpeed value="0.600000" />
-        </Item>
-        <Item type="NULL" />
-        <Item type="NULL" />
-      </SubHandlingData>
-
-    </Item>
-  </HandlingData>
+<AIHandling>AVERAGE</AIHandling>
+</Item>
+</HandlingData>
 </CHandlingDataMgr>`;
 
-  document.getElementById("output").value = xml;
+  document.getElementById("out").value = xml;
 }
 </script>
 
